@@ -1,0 +1,20 @@
+﻿<Window x:Class="BD_T2.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Trabalho 2 Implementação BD" Height="496" Width="391" ResizeMode="NoResize">
+    <Grid Height="464" VerticalAlignment="Top" Margin="0,0,4,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="121*"/>
+            <ColumnDefinition Width="398*"/>
+        </Grid.ColumnDefinitions>
+        <Rectangle Fill="#FFF4F4F5" Stroke="Black" Margin="0,1,0,-3" Grid.ColumnSpan="2" Height="466" VerticalAlignment="Top"/>
+        <TextBlock x:Name="w_FileReadStatus" HorizontalAlignment="Left" Height="25" Margin="10,16,0,0" TextWrapping="Wrap" Text="&lt;&lt; FileRead Status &gt;&gt;" VerticalAlignment="Top" Width="145" Grid.ColumnSpan="2"/>
+        <TextBlock x:Name="w_FileOperations" HorizontalAlignment="Left" Height="421" Margin="5,46,0,-3" TextWrapping="Wrap" Text="&lt;&lt; Operations Found &gt;&gt;" VerticalAlignment="Top" Width="150" Grid.ColumnSpan="2"/>
+        <TextBlock x:Name="w_OperationResult" HorizontalAlignment="Left" Height="215" Margin="71,88,0,0" TextWrapping="Wrap" Text="&lt;&lt; Results &gt;&gt;" VerticalAlignment="Top" Width="214" Grid.Column="1"/>
+        <Button x:Name="w_ReadFileButton" Content="Read File" HorizontalAlignment="Left" Height="31" Margin="71,10,0,0" VerticalAlignment="Top" Width="106" ToolTip="Reads the txt file to be used" Click="w_ReadFileButton_Click" Grid.Column="1"/>
+        <Button x:Name="w_ExecuteFileButton" Content="Execute File" Grid.Column="1" HorizontalAlignment="Left" Height="31" Margin="182,10,0,0" VerticalAlignment="Top" Width="100" Click="w_ExecuteFileButton_Click" RenderTransformOrigin="0.48,0.613"/>
+        <Button x:Name="w_ExecuteAllButton" Content="All" Grid.Column="1" HorizontalAlignment="Left" Height="37" Margin="235,46,0,0" VerticalAlignment="Top" Width="47" Click="w_ExecuteAllButton_Click"/>
+        <Button x:Name="w_ExecuteStepButton" Content="Step" Grid.Column="1" HorizontalAlignment="Left" Margin="182,46,0,0" VerticalAlignment="Top" Width="48" Height="37" Click="w_ExecuteStepButton_Click"/>
+        <Button x:Name="w_ClearExecutionButton" Content="Clear Execution" Grid.Column="1" HorizontalAlignment="Left" Height="37" Margin="71,46,0,0" VerticalAlignment="Top" Width="106" Click="w_ClearExecutionButton_Click"/>
+    </Grid>
+</Window>

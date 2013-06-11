@@ -25,6 +25,8 @@ namespace BD_T2
 
         String s_operations;
         List<char> i_lockList = new List<char>();
+        StringReader reader;
+        private TwoPhaseLocker twopl;
 
         #endregion
 
@@ -55,6 +57,7 @@ namespace BD_T2
                 w_FileOperations.Text = s_operations;
                 w_FileReadStatus.Text = "File read successfully";
                 w_ExecuteFileButton.IsEnabled = true;
+                reader = new StringReader(s_operations);
             }
             catch (Exception ex)
             {
@@ -68,7 +71,9 @@ namespace BD_T2
         {
             w_ExecuteFileButton.IsEnabled = false;
             w_ExecuteAllButton.IsEnabled = true;
-            w_ExecuteStepButton.IsEnabled = true;                
+            w_ExecuteStepButton.IsEnabled = true;
+            w_OperationResult.Text = string.Empty;
+            twopl = new TwoPhaseLocker(s_operations);
             // ATIVAR EXECUÇÃO DO ARQUIVO
         }
 
@@ -82,11 +87,12 @@ namespace BD_T2
         private void w_ExecuteStepButton_Click(object sender, RoutedEventArgs e)
         {
             w_ClearExecutionButton.IsEnabled = true;
-            // PRÓXIMA LINHA
-            // SE LINHA == NULL
-            // {
-            // w_ExecuteStepButton.IsEnabled = false;
-            // }
+            string r = twopl.Step();
+            w_ExecuteStepButton.IsEnabled = r != null;
+            if(r != null)
+                w_OperationResult.Text = r;
+            else
+                w_OperationResult.Text += "\nFim!";
         }
 
         private void w_ClearExecutionButton_Click(object sender, RoutedEventArgs e)

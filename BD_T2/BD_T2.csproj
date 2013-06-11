@@ -53,6 +53,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DbOperation.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="Lock.cs" />
+    <Compile Include="Transaction.cs" />
+    <Compile Include="TwoPhaseLocker.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

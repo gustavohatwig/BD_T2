@@ -18,7 +18,8 @@ namespace BD_T2
         private List<Lock> locks;
         private List<KeyValuePair<Transaction, DbOperation>> realizedOperations;
         private List<KeyValuePair<string, Queue<DbOperation>>> dados;
-        private Queue<DbOperation> pendingNexts; 
+        private Queue<DbOperation> pendingNexts;
+        private List<string> erros; 
         private string Results
         {
             get { return string.Join("\n", realizedOperations.Select(o => o.Value.OriginalCommand)); }
@@ -37,6 +38,7 @@ namespace BD_T2
             locks = new List<Lock>();
             pendingNexts = new Queue<DbOperation>();
             dados = new List<KeyValuePair<string, Queue<DbOperation>>>();
+            erros = new List<string>();
         }
 
         private void ExecuteOperation(DbOperation op)
@@ -47,27 +49,41 @@ namespace BD_T2
             switch (op.Operation)
             {
                 case TransactionOperation.Read:
+                    //Há locks de outras transações, ou há um lock pendente dessa transação nesse dado.
                     if (
-                        locks.Any(
-                            l => l.LockType == LockType.Exclusive && l.Data == dado && !t.Equals(l.Transaction)))
+                        locks.Any(l => l.LockType == LockType.Exclusive && l.Data == dado && !t.Equals(l.Transaction))
+                        || dados.Any(d => d.Key == dado && d.Value.Any(v => v.Transaction.Id == t.Id)))
                     {
                         //Read pendente enfileira na própria transação
                         t.OperationQueue.Enqueue(op);
                     }
                     else
                     {
+                        if (!locks.Any(l => l.Data == dado && l.Transaction == t.Id))
+                        {
+                            op.OriginalCommand += " (nao executado - sem Lock)";
+                            erros.Add(op.OriginalCommand);
+                            t.Broken = true;
+                        }
                         //ToDo: aqui ainda deve verificar se tem o lock correto (shared ou exclusivo)
                         ExecuteOperation(t, op);
                     }
                     break;
                 case TransactionOperation.Write:
-                    if (locks.Any(l => l.Data == dado && !t.Equals(l.Transaction)))
+                    if (locks.Any(l => l.Data == dado && !t.Equals(l.Transaction))
+                        || dados.Any(d => d.Key == dado && d.Value.Any(v => v.Transaction.Id == t.Id && v.Operation == TransactionOperation.ExclusiveLock)))
                     {
                         //Write pendente enfileira na própria transação
                         t.OperationQueue.Enqueue(op);
                     }
                     else
                     {
+                        if (!locks.Any(l => l.Data == dado && l.Transaction == t.Id && l.LockType == LockType.Exclusive))
+                        {
+                            op.OriginalCommand += " (nao executado - sem X-Lock)";
+                            erros.Add(op.OriginalCommand);
+                            t.Broken = true;
+                        }
                         //ToDo: aqui ainda deve verificar se tem o lock correto (shared ou exclusivo)
                         ExecuteOperation(t, op);
                     }
@@ -78,6 +94,7 @@ namespace BD_T2
                         //Marca a transação como quebrada. Não irá executar as próximas operações pra ela.
                         t.Broken = true;
                         op.OriginalCommand += " (not executed, 2PL violation)";
+                        erros.Add(op.OriginalCommand);
                         realizedOperations.Add(new KeyValuePair<Transaction, DbOperation>(t, op));
                     }
                         //Se já houver um lock exclusivo, põe na fila de espera e executa a próxima operaçãp...
@@ -100,6 +117,7 @@ namespace BD_T2
                         //Marca a transação como quebrada. Não irá executar as próximas operações pra ela.
                         t.Broken = true;
                         op.OriginalCommand += " (not executed, 2PL violation)";
+                        erros.Add(op.OriginalCommand);
                         realizedOperations.Add(new KeyValuePair<Transaction, DbOperation>(t, op));
                     }
                     else if (
@@ -159,13 +177,15 @@ namespace BD_T2
                         }
                     }
 
-                    realizedOperations.Add(new KeyValuePair<Transaction, DbOperation>(t, op));
+                    ExecuteOperation(t, op);
                     break;
             }
         }
 
         public string Step()
         {
+            Cleanup();
+
             if(pendingNexts.Any())
                 ExecuteOperation(pendingNexts.Dequeue());
             else
@@ -203,12 +223,23 @@ namespace BD_T2
                 //Se a transação estiver quebrada, executa o próximo comando.
                 if (t.Broken)
                     Step();
+                else 
                 {
                     ExecuteOperation(op);
                 }
             }
 
             return Results;
+        }
+
+        private void Cleanup()
+        {
+            IEnumerable<Transaction> broken = transactions.Where(t => t.Broken).ToArray();
+            foreach (var transaction in broken)
+            {
+                locks.RemoveAll(l => transaction.Id == l.Transaction);
+                realizedOperations.RemoveAll(op => op.Key == transaction);
+            }
         }
         
         private void ExecuteOperation(Transaction t, DbOperation op)

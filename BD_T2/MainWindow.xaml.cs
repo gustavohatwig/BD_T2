@@ -45,7 +45,7 @@ namespace BD_T2
         {
             try
             {
-                StreamReader i_fileReader = new StreamReader("EscalaCorreta.txt");
+                StreamReader i_fileReader = new StreamReader("EscalaErroLockT1.txt");
                 String line = String.Empty;
                 s_operations = String.Empty;
 

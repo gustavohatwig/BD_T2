@@ -8,20 +8,20 @@ namespace BD_T2
 {
     public class DbOperation
     {
+        public Transaction Transaction { get; set; }
         public TransactionOperation Operation { get; set; }
         public string Data { get; set; }
         public string OriginalCommand { get; set; }
 
-        public DbOperation(string data, TransactionOperation operation)
+        public DbOperation(string data, TransactionOperation operation, Transaction transaction) : this(data, operation, transaction, null)
         {
-            Operation = operation;
-            Data = data;
         }
 
-        public DbOperation(string data, TransactionOperation operation, string originalCommand)
+        public DbOperation(string data, TransactionOperation operation, Transaction transaction, string originalCommand)
         {
             Operation = operation;
             Data = data;
+            Transaction = transaction;
             OriginalCommand = originalCommand;
         }
 

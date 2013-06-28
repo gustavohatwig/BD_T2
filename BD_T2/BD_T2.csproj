@@ -55,9 +55,16 @@
     </ApplicationDefinition>
     <Compile Include="DbOperation.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Files.xaml.cs">
+      <DependentUpon>Files.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Lock.cs" />
     <Compile Include="Transaction.cs" />
     <Compile Include="TwoPhaseLocker.cs" />
+    <Page Include="Files.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

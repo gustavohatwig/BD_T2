@@ -27,7 +27,7 @@ namespace BD_T2
         List<char> i_lockList = new List<char>();
         StringReader reader;
         private TwoPhaseLocker twopl;
-
+        private Files file;
         #endregion
 
         public MainWindow()
@@ -45,7 +45,17 @@ namespace BD_T2
         {
             try
             {
-                StreamReader i_fileReader = new StreamReader("EscalaErro2PLT1.txt");
+                file = new Files();
+                file.ShowDialog();
+
+                w_ExecuteAllButton.IsEnabled = false;
+                w_ExecuteStepButton.IsEnabled = false;
+                w_ClearExecutionButton.IsEnabled = false;
+                s_operations = String.Empty;
+                w_FileOperations.Text = String.Empty;
+                w_OperationResult.Text = "<< Results >>";
+
+                StreamReader i_fileReader = new StreamReader(file.getReadFile());
                 String line = String.Empty;
                 s_operations = String.Empty;
 
@@ -55,10 +65,11 @@ namespace BD_T2
                 }
 
                 w_FileOperations.Text = s_operations;
-                w_FileReadStatus.Text = "File read successfully";
+                w_FileReadStatus.Text = file.getReadName();
                 w_ExecuteFileButton.IsEnabled = true;
                 reader = new StringReader(s_operations);
             }
+            // NÃO VAI MAIS ENTRAR AQUI -> ASSIM ESPERA-SE
             catch (Exception ex)
             {
                 w_FileReadStatus.Text = "Could not read the file.";
@@ -74,18 +85,29 @@ namespace BD_T2
             w_ExecuteStepButton.IsEnabled = true;
             w_OperationResult.Text = string.Empty;
             twopl = new TwoPhaseLocker(s_operations);
-            // ATIVAR EXECUÇÃO DO ARQUIVO
         }
 
         private void w_ExecuteAllButton_Click(object sender, RoutedEventArgs e)
         {
             w_ExecuteStepButton.IsEnabled = false;
             w_ClearExecutionButton.IsEnabled = true;
-            // RODAR ARQUIVO DE UMA VEZ SÓ
+
+            while (true)
+            {
+                string r = twopl.Step();
+                if (r != null)
+                    w_OperationResult.Text = r;
+                else
+                {
+                    w_OperationResult.Text += "\nFim!";
+                    break;
+                }
+            }
         }
 
         private void w_ExecuteStepButton_Click(object sender, RoutedEventArgs e)
         {
+            w_ExecuteAllButton.IsEnabled = false;
             w_ClearExecutionButton.IsEnabled = true;
             string r = twopl.Step();
             w_ExecuteStepButton.IsEnabled = r != null;
@@ -101,7 +123,7 @@ namespace BD_T2
             w_ExecuteFileButton.IsEnabled = true;
             w_ExecuteAllButton.IsEnabled = false;
             w_ExecuteStepButton.IsEnabled = false;
-            // PARAR EXECUÇÃO DO ARQUIVO -- PERDE O QUE JÁ FOI FEITO
+            w_OperationResult.Text = "<< Results >>";
         }
     }
 }

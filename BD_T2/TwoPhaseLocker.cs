@@ -24,7 +24,7 @@ namespace BD_T2
         {
             get { return string.Join("\n", realizedOperations.Select(o => o.Value.OriginalCommand)); }
         }
-
+        
         private StringReader reader;
         private Regex regex;
 
@@ -142,43 +142,53 @@ namespace BD_T2
                     }
                     break;
                 case TransactionOperation.Unlock:
+
                     IEnumerable<Lock> lo = locks.Where(x => x.Data == dado && t.Id.Equals(x.Transaction)).ToArray();
-                    locks.RemoveAll(p => lo.Contains(p));
-
-                    var lockQueue = dados.First(d => d.Key == dado).Value;
-                    if (lockQueue.Any())
+                    if (!lo.Any() && dados.Any(d => d.Key.Equals(dado) && d.Value.Any(o => o.Transaction.Equals(t))))
                     {
-                        //Se não há mais nenhum lock no dado, simplesmente adiciona o próximo pedido de lock na fila de execução
-                        if (!locks.Any(l => l.Data == dado))
-                        {
-                            var oper = lockQueue.Dequeue();
-                            pendingNexts.Enqueue(oper);
+                        //Não tem lock pra fazer unlock.
+                        dados.First(d => d.Key.Equals(dado)).Value.Enqueue(op);
+                        Step();
+                    }
+                    else {
 
-                            while (oper.Transaction.OperationQueue.Any())
-                            {
-                                pendingNexts.Enqueue(oper.Transaction.OperationQueue.Dequeue());
-                            }
-                        }
-                        else
-                        {
-                            //Há locks ainda no mesmo dado, então só adiciona o lock dessa fila se não for um lock exclusivo.
-                            var oper = lockQueue.Peek();
+                        locks.RemoveAll(p => lo.Contains(p));
 
-                            if (oper.Operation != TransactionOperation.ExclusiveLock)
+                        var lockQueue = dados.First(d => d.Key == dado).Value;
+                        if (lockQueue.Any())
+                        {
+                            //Se não há mais nenhum lock no dado, simplesmente adiciona o próximo pedido de lock na fila de execução
+                            if (!locks.Any(l => l.Data == dado))
                             {
-                                oper = lockQueue.Dequeue();
+                                var oper = lockQueue.Dequeue();
                                 pendingNexts.Enqueue(oper);
 
-                                while (oper.Transaction.OperationQueue.Peek() != null)
+                                while (oper.Transaction.OperationQueue.Any())
                                 {
                                     pendingNexts.Enqueue(oper.Transaction.OperationQueue.Dequeue());
                                 }
                             }
+                            else
+                            {
+                                //Há locks ainda no mesmo dado, então só adiciona o lock dessa fila se não for um lock exclusivo.
+                                var oper = lockQueue.Peek();
+
+                                if (oper.Operation != TransactionOperation.ExclusiveLock)
+                                {
+                                    oper = lockQueue.Dequeue();
+                                    pendingNexts.Enqueue(oper);
+
+                                    while (oper.Transaction.OperationQueue.Peek() != null)
+                                    {
+                                        pendingNexts.Enqueue(oper.Transaction.OperationQueue.Dequeue());
+                                    }
+                                }
+                            }
                         }
                     }
-
                     ExecuteOperation(t, op);
                     break;
+                    
             }
         }
 
@@ -192,8 +202,7 @@ namespace BD_T2
             {
                 string r = reader.ReadLine();
                 if (r == null)
-                    return "end of file";
-
+                    return null;
                 if (!regex.IsMatch(r))
                     return "linha de comando com formato inválido.";
 
